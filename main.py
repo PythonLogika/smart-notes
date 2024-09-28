@@ -79,17 +79,116 @@ layout_notes.addLayout(col_1, stretch = 2)
 layout_notes.addLayout(col_2, stretch = 1)
 notes_win.setLayout(layout_notes)
 
+'''Функціонал програми'''
+
+'''Робота з текстом замітки'''
+def add_note():
+    note_name, ok = QInputDialog.getText(notes_win, "Додати замітку", "Назва замітки: ")
+    if ok and note_name != "":
+        notes[note_name] = {"текст" : "", "теги" : []}
+        list_notes.addItem(note_name)
+        list_tags.addItems(notes[note_name]["теги"])
+        print(notes) 
+
+
 def show_note():
-    # отримуємо текст із замітки з виділеною назвою та відображаємо його в полі редагування
+    # отримуємо текст із замітки з виділеною назвою та відображаємо її в полі редагування
     key = list_notes.selectedItems()[0].text()
     print(key)
     field_text.setText(notes[key]["текст"])
     list_tags.clear()
     list_tags.addItems(notes[key]["теги"])
 
+
+def save_note():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        notes[key]["текст"] = field_text.toPlainText()
+        with open("notes_data.json", "w") as file:
+            json.dump(notes, file, sort_keys=True, ensure_ascii=False)
+        print(notes)
+    else:
+        print("Замітка для збереження не вибрана!")
+
+
+def del_note():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        del notes[key]
+        list_notes.clear()
+        list_tags.clear()
+        field_text.clear()
+        list_notes.addItems(notes)
+        with open("notes_data.json", "w") as file:
+            json.dump(notes, file, sort_keys=True, ensure_ascii=False)
+        print(notes)
+    else:
+        print("Замітка для вилучення не обрана!")
+
+
+'''Работа з тегами замітки'''
+def add_tag():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        tag = field_tag.text()
+        if not tag in notes[key]["теги"]:
+            notes[key]["теги"].append(tag)
+            list_tags.addItem(tag)
+            field_tag.clear()
+        with open("notes_data.json", "w") as file:
+            json.dump(notes, file, sort_keys=True, ensure_ascii=False)
+        print(notes)
+    else:
+        print("Замітка для додавання тега не обрана!")
+
+
+def del_tag():
+    if list_tags.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        tag = list_tags.selectedItems()[0].text()
+        notes[key]["теги"].remove(tag)
+        list_tags.clear()
+        list_tags.addItems(notes[key]["теги"])
+        with open("notes_data.json", "w") as file:
+            json.dump(notes, file, sort_keys=True, ensure_ascii=False)
+    else:
+        print("Тег для вилучення не обраний!")
+
+
+def search_tag():
+    print(button_tag_search.text())
+    tag = field_tag.text()
+    if button_tag_search.text() == "Шукати замітки по тегу" and tag:
+        print(tag)
+        notes_filtered = {} # тут будуть замітки з виділеним тегом
+        for note in notes:
+            if tag in notes[note]["теги"]: 
+                notes_filtered[note]=notes[note]
+        button_tag_search.setText("Скинути пошук")
+        list_notes.clear()
+        list_tags.clear()
+        list_notes.addItems(notes_filtered)
+        print(button_tag_search.text())
+    elif button_tag_search.text() == "Скинути пошук":
+        field_tag.clear()
+        list_notes.clear()
+        list_tags.clear()
+        list_notes.addItems(notes)
+        button_tag_search.setText("Шукати замітки по тегу")
+        print(button_tag_search.text())
+    else:
+        pass
+
+
 '''Запуск програми'''
 # підключення обробки подій
 list_notes.itemClicked.connect(show_note)
+button_note_create.clicked.connect(add_note)
+button_note_save.clicked.connect(save_note)
+button_note_del.clicked.connect(del_note)
+button_tag_add.clicked.connect(add_tag)
+button_tag_del.clicked.connect(del_tag)
+button_tag_search.clicked.connect(search_tag)
 
 # запуск програми
 notes_win.show()
